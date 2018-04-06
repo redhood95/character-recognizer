@@ -44,6 +44,62 @@ convo_2_pooling = max_pool_2by2(convo_2)
 convo_2 = convolutional_layer(convo_1_pooling,shape=[6,6,32,64])
 convo_2_pooling = max_pool_2by2(convo_2)
 
+convo_2_flat = tf.reshape(convo_2_pooling,[-1,7*7*64])
+full_layer_one = tf.nn.relu(normal_full_layer(convo_2_flat,1024))
+
+hold_prob = tf.placeholder(tf.float32)
+full_one_dropout = tf.nn.dropout(full_layer_one,keep_prob=hold_prob)
+
+y_pred = normal_full_layer(full_one_dropout,10)
+
+optimizer = tf.train.AdamOptimizer(learning_rate=0.0001)
+train = optimizer.minimize(cross_entropy)
+
+init = tf.global_variables_initializer()
+
+steps = 5000
+
+with tf.Session() as sess:
+    
+    sess.run(init)
+    
+    for i in range(steps):
+        
+        batch_x , batch_y = emnist.train.next_batch(50)
+        
+        sess.run(train,feed_dict={x:batch_x,y_true:batch_y,hold_prob:0.5})
+        
+        # PRINT OUT A MESSAGE EVERY 100 STEPS
+        if i%100 == 0:
+            
+            print('Currently on step {}'.format(i))
+            print('Accuracy is:')
+            # Test the Train Model
+            matches = tf.equal(tf.argmax(y_pred,1),tf.argmax(y_true,1))
+
+            acc = tf.reduce_mean(tf.cast(matches,tf.float32))
+
+            print(sess.run(acc,feed_dict={x:emnist.test.images,y_true:emnist.test.labels,hold_prob:1.0}))
+            print('\n')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
